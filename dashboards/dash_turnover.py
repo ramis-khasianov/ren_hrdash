@@ -1,8 +1,11 @@
 import os
 import pandas as pd
 from datetime import datetime
-from flask_login import current_user
 import json
+import locale
+import sys
+
+from flask_login import current_user
 
 from dash import Dash
 from dash.dependencies import Input, Output
@@ -14,6 +17,11 @@ from plotly.subplots import make_subplots
 
 from dashboards.dash_functions import apply_layout_with_auth
 from dashboards.dash_configs import layout, engine
+
+if sys.platform == 'win32':
+    locale.setlocale(locale.LC_ALL, 'rus_rus')
+else:
+    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 url_base = '/dash/dashturnover/'
 
