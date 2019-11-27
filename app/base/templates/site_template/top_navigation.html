@@ -8,18 +8,18 @@
       <li class="">
         <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
           {% if current_user.is_authenticated %}
-          <img src="/static/images/img.jpg" alt="">{{ current_user.username }}
+          {{ current_user.username }}
           {% else %}
           Войти / Запросить доступ
           {% endif %}
           <span class=" fa fa-angle-down"></span>
         </a>
         <ul class="dropdown-menu dropdown-usermenu pull-right">
-          {% if Is_admin %}
-          <li><a href="/setting/add_user"> Настройки админа </a></li>
+          {% if is_admin %}
+          <li><a href="/settings/administration"> Настройки админа </a></li>
           <li><a href="/logout"><i class="fa fa-sign-out pull-right"></i> Выйти</a></li>
           {% elif current_user.is_authenticated %}
-          <li><a href="/setting/change_password"> Настройки </a></li>
+          <li><a href="/setting/profile"> Мой профиль </a></li>
           <li><a href="/logout"><i class="fa fa-sign-out pull-right"></i> Выйти</a></li>
           {% else %}
           <li><a href="/login"> Войти</a></li>

@@ -1,5 +1,6 @@
-from flask import Blueprint
-from flask import render_template
+from flask import Blueprint, render_template
+from datetime import date
+from app.posts.models import Post
 
 blueprint = Blueprint(
     'home_blueprint',
@@ -12,4 +13,5 @@ blueprint = Blueprint(
 
 @blueprint.route('/')
 def index():
-    return render_template('index.html')
+    posts = Post.query.order_by(Post.date.desc()).limit(4).all()
+    return render_template('index.html', posts=posts)

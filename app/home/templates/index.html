@@ -47,82 +47,27 @@
         <div class="x_panel">
           <div class="x_title">
             <h2>Обновления HR Дашборда</h2>
-            <ul class="nav navbar-right panel_toolbox">
-              <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-              </li>
-              <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
-                <ul class="dropdown-menu" role="menu">
-                  <li><a href="#">Settings 1</a>
-                  </li>
-                  <li><a href="#">Settings 2</a>
-                  </li>
-                </ul>
-              </li>
-              <li><a class="close-link"><i class="fa fa-close"></i></a>
-              </li>
-            </ul>
             <div class="clearfix"></div>
           </div>
           <div class="x_content">
             <div class="dashboard-widget-content">
               <ul class="list-unstyled timeline widget">
+                {% for post in posts %}
                 <li>
                   <div class="block">
                     <div class="block_content">
                       <h2 class="title">
-                                        <a>Добавлен дашборд по Рекрутменту</a>
+                                        <a>{{ post.title }}</a>
                                     </h2>
                       <div class="byline">
-                        <span>4 дней назад</span> от <a>Рамис</a>
+                        <span> {{ post.date.strftime('%B %d, %Y') }} </span>: <a>{{ post.author.username }}</a>
                       </div>
-                      <p class="excerpt">Film festivals used to be do-or-die moments for movie makers. They were where you met the producers that could fund your project, and if the buyers liked your flick, they’d pay to Fast-forward and… <a>Читать</a>
+                      <p class="excerpt"> {{ post.text }}
                       </p>
                     </div>
                   </div>
                 </li>
-                <li>
-                  <div class="block">
-                    <div class="block_content">
-                      <h2 class="title">
-                                        <a>Добавлен новый уровень детализации на дашборды по численности и ФОТ</a>
-                                    </h2>
-                      <div class="byline">
-                        <span>6 дней назад</span> от <a>Рамис</a>
-                      </div>
-                      <p class="excerpt">Film festivals used to be do-or-die moments for movie makers. They were where you met the producers that could fund your project, and if the buyers liked your flick, they’d pay to Fast-forward and… <a>Читать</a>
-                      </p>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div class="block">
-                    <div class="block_content">
-                      <h2 class="title">
-                                        <a>Добавлен дашборд с данными ФОТ </a>
-                                    </h2>
-                      <div class="byline">
-                        <span>7 дней назад</span> от <a>Рамис</a>
-                      </div>
-                      <p class="excerpt">Film festivals used to be do-or-die moments for movie makers. They were where you met the producers that could fund your project, and if the buyers liked your flick, they’d pay to Fast-forward and… <a>Читать</a>
-                      </p>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div class="block">
-                    <div class="block_content">
-                      <h2 class="title">
-                                        <a>Портал HR аналитики запущен!</a>
-                                    </h2>
-                      <div class="byline">
-                        <span>13 дней назад</span> от <a>Рамис</a>
-                      </div>
-                      <p class="excerpt">Film festivals used to be do-or-die moments for movie makers. They were where you met the producers that could fund your project, and if the buyers liked your flick, they’d pay to Fast-forward and… <a>Читать</a>
-                      </p>
-                    </div>
-                  </div>
-                </li>
+                {% endfor %}
               </ul>
             </div>
           </div>

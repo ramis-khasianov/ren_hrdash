@@ -4,11 +4,10 @@
     <!-- menu profile quick info -->
   <div class="profile clearfix">
     <div class="profile_pic">
-      <img src="/static/images/ren_icon.png" alt="..." class="img-circle profile_img">
+      <img href="/home" src="/static/images/ren_icon.png" alt="..." class="img-circle profile_img">
     </div>
     <div class="profile_info">
-      <span>Привет,</span>
-      <h2> {{ current_user.username }} </h2>
+      <h3> HR Dash </h3>
     </div>
   </div>
   <!-- /menu profile quick info -->
@@ -22,14 +21,36 @@
       <ul class="nav side-menu">
 
         <li><a href="/home"><i class="fa fa-home"></i> Главная <span></span></a></li>
-
-        <li><a><i class="fa fa-bar-chart-o"></i> Численность <span class="fa fa-chevron-down"></span></a>
+        {% if current_user.is_authenticated %}
+        <li><a><i class="fa fa-users"></i> Сотрудники <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="/dashes/dash_fte">Динамика FTE</a></li>
             <li><a href="/dashes/dash_turnover">Текучесть</a></li>
+            <li><a href="/dashes/dash_demography">Демография</a></li>
+            <li><a href="#">Карьера</a></li>
           </ul>
         </li>
-
+        <li><a><i class="fa fa-bar-chart-o"></i> ФОТ <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="#">Динамика ФОТ</a></li>
+            <li><a href="#">Comparatio</a></li>
+            <li><a href="#">Премии</a></li>
+          </ul>
+        </li>
+        <li><a><i class="fa fa-binoculars"></i> Подбор <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="#">Вакансии в работе</a></li>
+            <li><a href="#">Воронка подбора</a></li>
+            <li><a href="#">Адаптация</a></li>
+          </ul>
+        </li>
+        <li><a><i class="fa fa-leanpub"></i> Обучение <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="#">Статистика обучения</a></li>
+            <li><a href="#">Эффективность обучения</a></li>
+          </ul>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>

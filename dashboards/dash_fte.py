@@ -38,24 +38,32 @@ dates_slider = dcc.RangeSlider(
     className="dcc_control"
 )
 
+n_function_show_slider = dcc.Slider(
+    id='n_functions_show_slider',
+    value=10,
+    min=0,
+    max=40,
+    className='dcc_control'
+)
+
 le_list = list(pd.read_sql('''
-SELECT DISTINCT data_source
+SELECT DISTINCT legal_entity_short
 FROM hc_data_main
-''', con=engine)['data_source'])
+''', con=engine)['legal_entity_short'])
 le_options = [{'label': str(dept), 'value': str(dept)} for dept in le_list]
-le_dropdown = dcc.Dropdown(
-        id='le_dropdown',
+le_checklist = dcc.Checklist(
+        id='le_checklist',
         options=le_options,
-        multi=True,
-        value=le_list,
+        value='ГРС',
         className='dcc_control',
+        labelStyle={'display': 'block'}
     )
 
 layout = html.Div([
     html.Div([
         html.Div([
             html.H6(id='selected_dates_text'),
-            dates_slider,
+            dates_slider
         ],
             className='pretty_container six columns'),
         html.Div(
@@ -75,42 +83,29 @@ layout = html.Div([
         dcc.Graph(id='total_fte_graph')
     ],
         className='pretty_container'),
-    html.Div([
-        dash_table.DataTable(
-            id='total_fte_table',
-            columns=[
-                {'name': 'Год', 'id': 'year'},
-                {'name': 'Янв', 'id': '1'},
-                {'name': 'Фев', 'id': '2'},
-                {'name': 'Мар', 'id': '3'},
-                {'name': 'Апр', 'id': '4'},
-                {'name': 'Май', 'id': '5'},
-                {'name': 'Июн', 'id': '6'},
-                {'name': 'Июл', 'id': '7'},
-                {'name': 'Авг', 'id': '8'},
-                {'name': 'Сен', 'id': '9'},
-                {'name': 'Окт', 'id': '10'},
-                {'name': 'Ноя', 'id': '11'},
-                {'name': 'Дек', 'id': '12'},
-            ]
-        )
-    ],
+    html.Div(
+        id='fte_table_container',
         className='pretty_container'),
     html.Div([
-        dcc.Graph(id='change_fte_wf'),
-    ], className='pretty_container'),
+        html.Div([
+            html.Div(
+                id='selected_n_functions_text',
+                className="control_label"),
+            n_function_show_slider,
+            le_checklist
+        ], className='pretty_container three columns'),
+        html.Div([
+            dcc.Graph(id='change_fte_wf'),
+        ], className='pretty_container nine columns'),
+    ], className="row flex_display"),
     html.Div([
         html.Div([
-
-            # html.Pre(id='json_test', style={'paddingTop': 25})
-        ],
-            id='detailed_function_table_container',
-            className='pretty_container five columns'),
+            dcc.Graph(id='function_fte_graph')
+        ], className='pretty_container four columns'),
         html.Div([
-            dcc.Graph(id='function_fte_graph'),
-        ], className='pretty_container seven columns'),
-    ], className='row flex_display')
-
+            html.Div(id='detailed_function_table_container')
+        ], className='pretty_container eight columns'),
+    ], className="row flex_display")
 ])
 
 
@@ -216,7 +211,16 @@ def register_dash(server):
                 }
             )
             traces.append(trace)
-
+        df_total = df.groupby('month_start').agg(fte=('fte', 'sum')).reset_index()
+        totals_trace = go.Scatter(
+            x=df_total['month_start'],
+            y=df_total['fte'].round(0),
+            name='Всего',
+            text=df_total['fte'].round(0),
+            textposition='top center',
+            mode='text'
+        )
+        traces.append(totals_trace)
         fte_graph_layout = go.Layout(
             title_text="Динамика численности группы компаний",
             autosize=True,
@@ -231,7 +235,7 @@ def register_dash(server):
         return figure
 
     @app.callback(
-        Output('total_fte_table', 'data'),
+        Output('fte_table_container', 'children'),
         [Input('dates_slider', 'value')])
     def get_fte_table(dates_range):
         start_date = dates_list[dates_range[0] - 1]
@@ -251,37 +255,68 @@ def register_dash(server):
             fill_value='-'
         ).reset_index()
         data = dff.to_dict('records')
-        return data
+        result_table = dash_table.DataTable(
+            data=data,
+            id='total_fte_table',
+            style_as_list_view=True,
+            columns=[
+                {'name': 'Год', 'id': 'year'},
+                {'name': 'Янв', 'id': '1'},
+                {'name': 'Фев', 'id': '2'},
+                {'name': 'Мар', 'id': '3'},
+                {'name': 'Апр', 'id': '4'},
+                {'name': 'Май', 'id': '5'},
+                {'name': 'Июн', 'id': '6'},
+                {'name': 'Июл', 'id': '7'},
+                {'name': 'Авг', 'id': '8'},
+                {'name': 'Сен', 'id': '9'},
+                {'name': 'Окт', 'id': '10'},
+                {'name': 'Ноя', 'id': '11'},
+                {'name': 'Дек', 'id': '12'},
+            ],
+            style_cell={
+                'backgroundColor': '#EDEDED',
+                'textOverflow': 'ellipsis',
+            }
+        )
+        return result_table
 
     @app.callback(
         Output('change_fte_wf', 'figure'),
-        [Input('dates_slider', 'value')])
-    def get_change_fte_wf(dates_range):
+        [Input('dates_slider', 'value'),
+         Input('n_functions_show_slider', 'value'),
+         Input('le_checklist', 'value')])
+    def get_change_fte_wf(dates_range, n_functions_selected, le_selected):
+        if not isinstance(le_selected, list):
+            le_condition = '= "' + str(le_selected) + '"'
+        else:
+            le_condition = 'in ' + str(tuple(le_selected))
         start_date = dates_list[dates_range[0] - 1]
         start_period = datetime.strftime(start_date, '%Y_%m')
         end_date = dates_list[dates_range[1] - 1]
         end_period = datetime.strftime(end_date, '%Y_%m')
-        n_cases = 10
+        print(start_period, end_period)
+        n_cases = n_functions_selected
         df_start = pd.read_sql('''
             SELECT month_start, SUM(fte) as fte 
             FROM hc_data_main
-            WHERE period = "{}"
-        '''.format(start_period), con=engine)
+            WHERE period = "{}" AND legal_entity_short {}
+        '''.format(start_period, le_condition), con=engine)
         df_start['title'] = 'FTE на ' + datetime.strftime(start_date, '%B %Y')
         df_start['measure'] = 'absolute'
         df_end = pd.read_sql('''
             SELECT month_start, SUM(fte) as fte 
             FROM hc_data_main
-            WHERE period = "{}"
-        '''.format(end_period), con=engine)
+            WHERE period = "{}" AND legal_entity_short {}
+        '''.format(end_period, le_condition), con=engine)
         df_end['title'] = 'FTE на ' + datetime.strftime(end_date, '%B %Y')
         df_end['measure'] = 'absolute'
         df_change = pd.read_sql('''
             SELECT function, period, SUM(fte) as fte 
             FROM hc_data_main
-            WHERE period = "{}" OR period = "{}"
+            WHERE (period = "{}" OR period = "{}") AND legal_entity_short {}
             GROUP BY function, period
-        '''.format(start_period, end_period), con=engine)
+        '''.format(start_period, end_period, le_condition), con=engine)
         df_change['function'].fillna('Не опознаны', inplace=True)
         dff = pd.pivot_table(
             df_change,
@@ -291,16 +326,22 @@ def register_dash(server):
             aggfunc='sum',
             fill_value=0
         ).reset_index()
-        dff['measure'] = 'relative'
+
         dff.rename(columns={start_period: 'start_fte', end_period: 'end_fte'},
                    inplace=True)
         dff['change'] = dff['start_fte'] - dff['end_fte']
         dff['rank'] = dff['change'].abs().rank(method='first', ascending=False)
-        dff_top_n = dff[dff['rank'] <= n_cases]
-        dff_top_n.sort_values(by='change', ascending=False)
+        '''
+        dff.loc[dff['rank'] > n_cases, 'function'] = 'Другие'
+        dff = dff.groupby(['function']).agg(change=('change', 'sum')).reset_index()
+        '''
+        dff['measure'] = 'relative'
+        dff_top_n = dff[dff['rank'] <= n_cases].copy()
+        dff_top_n.sort_values(by='change', ascending=False, inplace=True)
+        other_change = (df_end['fte'].sum() - df_start['fte'].sum()) - dff_top_n['change'].sum()
         dff_others = pd.DataFrame({
             'title': ['Другое'],
-            'fte': [dff[dff['rank'] > n_cases]['change'].sum()],
+            'fte': [other_change],
             'measure': ['relative']
         })
 
@@ -343,6 +384,13 @@ def register_dash(server):
         [Input('change_fte_wf', 'clickData')])
     def return_json(clickData):
         return json.dumps(clickData, indent=2)
+
+    @app.callback(
+        Output('selected_n_functions_text', 'children'),
+        [Input('n_functions_show_slider', 'value')])
+    def get_selected_n_functions_text(n_functions_selected):
+        text_string = 'Показать детализацию по {} функциям'.format(n_functions_selected)
+        return text_string
 
     @app.callback(
         Output('function_fte_graph', 'figure'),
@@ -439,6 +487,7 @@ def register_dash(server):
         dff.rename(columns={start_period: 'start_period', end_period: 'end_period'},
                    inplace=True)
         dff['change'] = (dff['end_period'] - dff['start_period']).round(1)
+        dff.sort_values(by=['change'], ascending=False, inplace=True)
         data = dff.to_dict('records')
         result_table = dash_table.DataTable(
             data=data,
@@ -452,23 +501,20 @@ def register_dash(server):
             ],
             fixed_rows={'headers': True, 'data': 0},
             style_cell_conditional=[
-                {'if': {'column_id': 'start_period'}, 'width': '20%'},
-                {'if': {'column_id': 'end_period'}, 'width': '20%'},
-                {'if': {'column_id': 'change'}, 'width': '20%'},
+                {'if': {'column_id': 'start_period'}, 'width': '50px'},
+                {'if': {'column_id': 'end_period'}, 'width': '50px'},
+                {'if': {'column_id': 'change'}, 'width': '50px'},
                 {'if': {'column_id': 'function_detailed'},
-                 'width': '40%',
+                 'width': '35%',
                  'textAlign': 'left'}
             ],
             style_cell={
                 'backgroundColor': '#EDEDED',
                 'textOverflow': 'ellipsis',
-                'maxWidth': 0,
             },
             style_table={
-                'maxHeight': '450px',
-                'maxWidth': '98%',
-                'overflowY': 'scroll',
-                'overflowX': 'scroll',
+                'width': '98%',
+                'maxHeight': '450px'
             },
         )
 
