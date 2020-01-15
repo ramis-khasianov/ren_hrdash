@@ -14,7 +14,10 @@
             <div class="x_panel">
                 <div class="x_title">
                     <h2>Пользователи</h2>
-                    <div class="clearfix"></div>
+                    <ul class="nav navbar-right panel_toolbox">
+                    <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_post') }}">Добавить</a>
+                    </ul>
+                <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
                     <div class="dashboard-widget-content">
@@ -24,12 +27,12 @@
                                 <div class="block">
                                     <div class="block_content">
                                         <h2 class="title">
-                                            <a>{{ user.email}}</a>
+                                            <a>{{ user.email }}</a>
                                         </h2>
                                         <div class="byline">
                                             <span> {{ user.username }} </span>
                                         </div>
-                                        <p class="excerpt"> Редактировать доступы </p>
+                                        <p class="excerpt"> {{ user.comment }} </p>
                                     </div>
                                 </div>
                             </li>
@@ -39,43 +42,22 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-md-6 col-sm-6 col-xs-12">
+        <div class="col-md-8 col-sm-8 col-xs-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>Обновления HR Дашборда</h2>
+                    <h2>Доступы</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                    <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_post') }}">Добавить</a>
+                    <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_feature_plan') }}">Добавить</a>
                     </ul>
                 <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
                     <div class="dashboard-widget-content">
-                        <ul class="list-unstyled timeline widget">
-                        {% for post in posts %}
-                            <li>
-                                <div class="block">
-                                    <div class="block_content">
-                                        <h2 class="title">
-                                            <a>{{ post.title }}</a>
-                                        </h2>
-                                        <div class="byline">
-                                            <span> {{ post.date.strftime('%B %d, %Y') }} </span>: <a>{{ post.author.username }}</a>
-                                        </div>
-                                        <p class="excerpt"> {{ post.text }} </p>
-                                        <form action="{{ url_for('posts_blueprint.delete_post', post_id=post.id) }}" method="POST">
-                                            <input class="btn" type="submit" value="Удалить">
-                                        </form>
-                                    </div>
-                                </div>
-                            </li>
-                        {% endfor %}
-                        </ul>
+
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 

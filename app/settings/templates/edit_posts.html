@@ -1,0 +1,90 @@
+{% extends "base_site.html" %}
+
+{% block title %} Домашнаяя страница {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="row tile_count">
+
+        <div class="col-md-6 col-sm-6 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Обновления HR Дашборда</h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                    <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_post') }}">Добавить</a>
+                    </ul>
+                <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div class="dashboard-widget-content">
+                        <ul class="list-unstyled timeline widget">
+                        {% for post in posts %}
+                            <li>
+                                <div class="block">
+                                    <div class="block_content">
+                                        <h2 class="title">
+                                            <a>{{ post.title }}</a>
+                                        </h2>
+                                        <div class="byline">
+                                            <span> {{ post.date.strftime('%B %d, %Y') }} </span>: <a>{{ post.author.username }}</a>
+                                        </div>
+                                        <p class="excerpt"> {{ post.text }} </p>
+                                        <form action="{{ url_for('posts_blueprint.delete_post', post_id=post.post_id) }}" method="POST">
+                                            <input class="btn" type="submit" value="Удалить">
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-sm-6 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Планы доработки дашборда</h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                    <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_feature_plan') }}">Добавить</a>
+                    </ul>
+                <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div class="dashboard-widget-content">
+                        <ul class="list-unstyled timeline widget">
+                        {% for feature in features %}
+                            <li>
+                                <div class="block">
+                                    <div class="block_content">
+                                        <h2 class="title">
+                                            <a>{{ feature.feature_name }}</a>
+                                        </h2>
+                                        <div class="byline">
+                                            <span> Планируется реализовать: {{ feature.feature_planned_end.strftime('%B %d, %Y') }} </span>
+                                        </div>
+                                        <p class="excerpt"> {{ feature.feature_comment }} </p>
+                                        <form action="{{ url_for('posts_blueprint.delete_feature_plan', feature_id=feature.feature_id) }}" method="POST">
+                                            <input class="btn" type="submit" value="Удалить">
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+{% endblock javascripts %}

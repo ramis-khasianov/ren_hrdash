@@ -1,0 +1,53 @@
+{% extends "base_site.html" %}
+
+{% block title %} Домашнаяя страница {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="row tile_count">
+
+        <div class="col-md-6 col-sm-6 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Юр. Лица</h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                        <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_post') }}"><i class="fa fa-plus"></i></a>
+                    </ul>
+                <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div class="dashboard-widget-content">
+                        <ul class="list-unstyled timeline widget">
+                        {% for legal_entity in legal_entities %}
+                            <li>
+                                <div class="block">
+                                    <div class="block_content">
+                                        <h2 class="title">
+                                            <a>{{ legal_entity.short }}</a>
+                                        </h2>
+                                        <div class="byline">
+                                            <span> {{ legal_entity.legal_entity }} </span>
+                                        </div>
+                                        <p class="excerpt"> {{ legal_entity.legal_entity_short_eng }} </p>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+{% endblock javascripts %}

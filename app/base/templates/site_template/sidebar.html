@@ -21,35 +21,24 @@
       <ul class="nav side-menu">
 
         <li><a href="/home"><i class="fa fa-home"></i> Главная <span></span></a></li>
-        {% if current_user.is_authenticated %}
+        {% if current_user.is_authenticated and (current_user.accesses != [] or current_user.role_id != 4) %}
         <li><a><i class="fa fa-users"></i> Сотрудники <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="/dashes/dash_fte">Динамика FTE</a></li>
+            <li><a href="/dashes/dash_fteregions">FTE по регионам</a></li>
             <li><a href="/dashes/dash_turnover">Текучесть</a></li>
-            <li><a href="/dashes/dash_demography">Демография</a></li>
-            <li><a href="#">Карьера</a></li>
+
           </ul>
         </li>
-        <li><a><i class="fa fa-bar-chart-o"></i> ФОТ <span class="fa fa-chevron-down"></span></a>
-          <ul class="nav child_menu">
-            <li><a href="#">Динамика ФОТ</a></li>
-            <li><a href="#">Comparatio</a></li>
-            <li><a href="#">Премии</a></li>
-          </ul>
-        </li>
-        <li><a><i class="fa fa-binoculars"></i> Подбор <span class="fa fa-chevron-down"></span></a>
-          <ul class="nav child_menu">
-            <li><a href="#">Вакансии в работе</a></li>
-            <li><a href="#">Воронка подбора</a></li>
-            <li><a href="#">Адаптация</a></li>
-          </ul>
-        </li>
-        <li><a><i class="fa fa-leanpub"></i> Обучение <span class="fa fa-chevron-down"></span></a>
-          <ul class="nav child_menu">
-            <li><a href="#">Статистика обучения</a></li>
-            <li><a href="#">Эффективность обучения</a></li>
-          </ul>
-        </li>
+          {% if is_admin %}
+          <li><a><i class="fa fa-cog"></i> Настройки <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              <li><a href="{{url_for('settings_blueprint.edit_users')}}">Пользователи и доступы</a></li>
+              <li><a href="{{url_for('settings_blueprint.edit_refs')}}">Справочники</a></li>
+              <li><a href="{{url_for('settings_blueprint.edit_posts')}}">Посты обновлений и планов</a></li>
+            </ul>
+          </li>
+          {% endif %}
         {% endif %}
       </ul>
     </div>

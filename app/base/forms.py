@@ -7,12 +7,12 @@ from app.base.models import User
 
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
 
 
 class RegistrationForm(FlaskForm):
-    email = StringField('Почта', validators=[DataRequired(), Email(message='Проверьте корректность')])
+    email = StringField('Почта', validators=[DataRequired()])
     username = StringField('Имя пользователя', validators=[DataRequired()])
     password = PasswordField('Пароль',
                              validators=[DataRequired(),
@@ -20,7 +20,9 @@ class RegistrationForm(FlaskForm):
                                                  message='Пароли не совпадают')])
     pass_confirm = PasswordField('Повторить пароль', validators=[DataRequired()])
 
-    @staticmethod
-    def check_email(field):
-        if User.query.filter_by(email=field.data).first():
-            raise ValidationError('Адрес эл.почты уже зарегистрирован')
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Текущий пароль', validators=[DataRequired()])
+    new_password = PasswordField('Новый пароль',
+                                 validators=[DataRequired()])
+    pass_confirm = PasswordField('Повторить новый пароль', validators=[DataRequired()])

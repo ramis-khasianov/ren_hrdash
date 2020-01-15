@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 from datetime import datetime
 import json
 import locale
@@ -8,7 +9,7 @@ import sys
 from flask_login import current_user
 
 from dash import Dash
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
@@ -84,8 +85,9 @@ functions_dropdown = dcc.Dropdown(
 functions_radio = dcc.RadioItems(
         id="functions_radio",
         options=[
-            {"label": "Все  ", "value": "all"},
-            {"label": "Настроить  ", "value": 'custom'}
+            {"label": "Все", "value": "all"},
+            {"label": "Выбранные", "value": 'include'},
+            {"label": "Кроме выбранных", "value": 'exclude'},
         ],
         value="all",
         labelStyle={"display": "inline-block"},
@@ -102,6 +104,7 @@ le_dropdown = dcc.Dropdown(
 
 
 layout = html.Div([
+    dcc.Store(id='memory'),
     html.Div([
         html.Div([
             html.Div(
@@ -118,7 +121,8 @@ layout = html.Div([
                 "Отобрать по функциям",
                 className="control_label"),
             functions_radio,
-            functions_dropdown
+            functions_dropdown,
+            html.Br(),
         ], className='pretty_container four columns'),
         html.Div([
             html.Div([
@@ -129,13 +133,22 @@ layout = html.Div([
     ], className='row flex_display'),
     html.Div([
         html.Div([
-            dcc.Graph(id='hires_attrition_graph')
-        ], className='pretty_container six columns'),
-        html.Div(
-            id='exited_employees_table_container',
-            className='pretty_container six columns'
-        )
+            html.Div([
+                dcc.Graph(id='hires_attrition_graph')],
+                id='hires_attrition_graph_container',
+                className='pretty_container'),
+        ], className='seven columns'),
+        html.Div([
+            html.Div([
+                dcc.Graph(id='hires_attrition_pie')],
+                id='hires_attrition_pie_container',
+                className='pretty_container'),
+        ], className='five columns'),
     ], className='row flex_display'),
+    html.Div(
+        id='exited_employees_table_container',
+        className='pretty_container'
+    ),
 ],
     id="main_container",
     style={"display": "flex", "flex-direction": "column"},
@@ -154,44 +167,81 @@ def register_dash(server):
 
     @app.callback(
         Output('exited_employees_table_container', 'children'),
-        [Input('total_to_graph', 'clickData'),
-         Input('lines_checklist', 'value'),
+        [Input('lines_checklist', 'value'),
          Input('functions_dropdown', 'value'),
          Input('functions_radio', 'value'),
-         Input('dates_slider', 'value')])
-    def get_exited_employees_table(clickData, selected_lines, selected_functions, selected_radio, dates_range):
-        if clickData is None:
-            month = dates_list[dates_range[1] - 1]
-            period = datetime.strftime(month, '%Y_%m')
+         Input('dates_slider', 'value')],
+        [State('memory', 'data')])
+    def get_exited_employees_table(selected_lines, selected_functions, selected_radio, dates_range, memory_data):
+        start_date = dates_list[dates_range[0] - 1]
+        start_period = datetime.strftime(start_date, '%Y_%m')
+        end_date = dates_list[dates_range[1] - 1]
+        end_period = datetime.strftime(end_date, '%Y_%m')
+
+        if memory_data is None:
+            return ''
+        elif memory_data['last_clicked']['id'] is None:
+            return ''
+        elif memory_data['last_clicked']['id'] == 'turnover':
+            df = pd.read_sql('''
+                        SELECT
+                        month_start,
+                        line,
+                        function,
+                        employee_name,
+                        position,
+                        city,
+                        hire_date,
+                        exit_date,
+                        tenure_group_on_exit,
+                        tenure_months
+                        FROM hc_data_main
+                        WHERE event_exit = 1
+                        ORDER BY function, employee_id;
+                        ''', con=engine, parse_dates=['month_start'])
+        elif memory_data['last_clicked']['id'] == 'attrition':
+            df = pd.read_sql('''
+                        SELECT
+                        month_start,
+                        line,
+                        function,
+                        employee_name,
+                        position,
+                        city,
+                        hire_date,
+                        exit_date,
+                        tenure_group_on_exit,
+                        tenure_months
+                        FROM hc_data_main
+                        WHERE event_hire = 1
+                        ORDER BY function, employee_id;
+                        ''', con=engine, parse_dates=['month_start'])
         else:
-            month = clickData['points'][0]['x']
-            period = month[:7].replace('-', '_')
+            return ''
+
         if not isinstance(selected_lines, list):
             selected_lines = [selected_lines]
         if not isinstance(selected_functions, list):
             selected_functions = [selected_functions]
-        df = pd.read_sql('''
-            SELECT
-            line,
-            function,
-            employee_id,
-            employee_name,
-            exit_date,
-            tenure_months
-            FROM hc_data_main
-            WHERE event_exit = 1 AND period = "{}" 
-            ORDER BY function, employee_id;
-            '''.format(period), con=engine, parse_dates=['month_start'])
-        if selected_radio == 'all':
-            dff = df[df['line'].isin(selected_lines)]
-        else:
-            dff = df[df['line'].isin(selected_lines) & df['function'].isin(selected_functions)]
 
+        if selected_radio == 'include':
+            dff = df[df['line'].isin(selected_lines) & df['function'].isin(selected_functions)].copy()
+        elif selected_radio == 'exclude':
+            dff = df[df['line'].isin(selected_lines) & ~df['function'].isin(selected_functions)].copy()
+        else:
+            dff = df[df['line'].isin(selected_lines)].copy()
+        dff = dff[(dff['month_start'] <= end_date) & (dff['month_start'] >= start_date)]
+        dff['hire_date'] = dff['hire_date'].dt.strftime('%d.%m.%Y')
+        dff['exit_date'] = dff['exit_date'].dt.strftime('%d.%m.%Y')
+        dff['exit_date'].fillna('-', inplace=True)
         data = dff[['function',
-                    'employee_id',
                     'employee_name',
+                    'position',
+                    'city',
+                    'hire_date',
                     'exit_date',
-                    'tenure_months']].to_dict('records')
+                    'tenure_group_on_exit'
+                    ]].to_dict('records')
         result_table = dash_table.DataTable(
             data=data,
             style_as_list_view=True,
@@ -199,25 +249,40 @@ def register_dash(server):
             fixed_rows={'headers': True, 'data': 0},
             columns=[
                 {'name': 'Функция', 'id': 'function'},
-                {'name': 'Таб', 'id': 'employee_id'},
                 {'name': 'ФИО', 'id': 'employee_name'},
+                {'name': 'Должность', 'id': 'position'},
+                {'name': 'Город', 'id': 'city'},
+                {'name': 'Дата приема', 'id': 'hire_date'},
                 {'name': 'Дата увольнения', 'id': 'exit_date'},
-                {'name': 'Стаж (мес)', 'id': 'tenure_months'},
+                {'name': 'Группа стажа', 'id': 'tenure_group_on_exit'}
             ],
             style_cell_conditional=[
                 {'if': {'column_id': 'function'},
                  'width': '20%',
                  'textAlign': 'left'},
-                {'if': {'column_id': 'employee_id'},
-                 'width': '15%',
-                 'textAlign': 'left'},
                 {'if': {'column_id': 'employee_name'},
                  'width': '20%',
-                 'textAlign': 'left'}
+                 'textAlign': 'left'},
+                {'if': {'column_id': 'position'},
+                 'width': '15%',
+                 'textAlign': 'left'},
+                {'if': {'column_id': 'city'},
+                 'width': '10%',
+                 'textAlign': 'left'},
+                {'if': {'column_id': 'hire_date'},
+                 'width': '10%',
+                 'textAlign': 'left'},
+                {'if': {'column_id': 'exit_date'},
+                 'width': '10%',
+                 'textAlign': 'left'},
+                {'if': {'column_id': 'tenure_group_on_exit'},
+                 'width': '15%',
+                 'textAlign': 'left'},
             ],
             style_cell={
                 'backgroundColor': '#EDEDED',
                 'textOverflow': 'ellipsis',
+                'font-size': '0.8rem',
             },
             style_table={
                 'width': '98%',
@@ -237,7 +302,6 @@ def register_dash(server):
             str(datetime.strftime(end_date, '%b %Y')))
         return text_string
 
-
     @app.callback(
         Output("functions_dropdown", "value"),
         [Input("functions_radio", "value")]
@@ -251,8 +315,15 @@ def register_dash(server):
         Output('total_to_graph', 'figure'),
         [Input('lines_checklist', 'value'),
          Input('functions_dropdown', 'value'),
-         Input("functions_radio", "value")])
-    def get_total_to_graph(selected_lines, selected_functions, selected_radio):
+         Input("functions_radio", "value"),
+         Input('dates_slider', 'value')])
+    def get_total_to_graph(selected_lines, selected_functions, selected_radio, dates_range):
+
+        start_date = dates_list[dates_range[0] - 1]
+        start_period = datetime.strftime(start_date, '%Y_%m')
+        end_date = dates_list[dates_range[1] - 1]
+        end_period = datetime.strftime(end_date, '%Y_%m')
+
         if not isinstance(selected_lines, list):
             selected_lines = [selected_lines]
         if not isinstance(selected_functions, list):
@@ -269,10 +340,12 @@ def register_dash(server):
             FROM
                 hc_data_main;
         ''', con=engine, parse_dates=['month_start'])
-        if selected_radio == 'all':
-            dff = df[df['line'].isin(selected_lines)]
-        else:
+        if selected_radio == 'include':
             dff = df[df['line'].isin(selected_lines) & df['function'].isin(selected_functions)]
+        elif selected_radio == 'exclude':
+            dff = df[df['line'].isin(selected_lines) & ~df['function'].isin(selected_functions)]
+        else:
+            dff = df[df['line'].isin(selected_lines)]
         df_total = pd.pivot_table(
             dff,
             index=['month_start'],
@@ -280,6 +353,16 @@ def register_dash(server):
             aggfunc='sum',
             fill_value=0,
             dropna=False).reset_index()
+
+        totals_df = df_total[(df_total['month_start'] >= start_date) &
+                             (df_total['month_start'] <= end_date)].copy()
+        total_avg_hc = totals_df['headcount_average'].mean()
+        total_exits_vol = totals_df['event_exit_voluntary'].sum()
+        total_exits_invol = totals_df['event_exit_involuntary'].sum()
+        total_to = (total_exits_invol + total_exits_vol) / total_avg_hc
+
+        title = f'Текучесть за период {datetime.strftime(start_date, "%m.%Y")} -' \
+                f' {datetime.strftime(end_date, "%m.%Y")} составила {total_to:.1%}'
 
         df_total['turnover'] = df_total['event_exit'] / df_total['headcount_average']
         df_total['turnover_involuntary'] = df_total['event_exit_involuntary'] / df_total['headcount_average']
@@ -309,7 +392,7 @@ def register_dash(server):
             mode='text'
         ), secondary_y=False)
         fig.update_layout(
-            title_text="Текучесть",
+            title_text=title,
             autosize=True,
             margin=dict(l=30, r=30, b=20, t=40),
             plot_bgcolor="#EDEDED",
@@ -317,6 +400,7 @@ def register_dash(server):
             barmode='stack',
             hovermode='x',
             legend=dict(font=dict(size=10), orientation="h"),
+            dragmode="select",
         )
         fig.update_yaxes(showgrid=False, secondary_y=True, tickformat='.1%', rangemode='tozero')
 
@@ -326,8 +410,9 @@ def register_dash(server):
         Output('hires_attrition_graph', 'figure'),
         [Input('lines_checklist', 'value'),
          Input('functions_dropdown', 'value'),
-         Input('functions_radio', 'value')])
-    def get_hires_attrition_graph(selected_lines, selected_functions, selected_radio):
+         Input('functions_radio', 'value'),
+         Input('dates_slider', 'value')])
+    def get_hires_attrition_graph(selected_lines, selected_functions, selected_radio, dates_selected):
         if not isinstance(selected_lines, list):
             selected_lines = [selected_lines]
         if not isinstance(selected_functions, list):
@@ -344,11 +429,13 @@ def register_dash(server):
             WHERE
                 event_hire = 1;
         ''', con=engine, parse_dates=['month_start'])
-        if selected_radio == 'all':
-            dff = df[df['line'].isin(selected_lines)]
-        else:
+        if selected_radio == 'include':
             dff = df[df['line'].isin(selected_lines) & df['function'].isin(selected_functions)]
-        tenure_on_exit_groups = sorted(list(df['tenure_group_on_exit'].unique()))
+        elif selected_radio == 'exclude':
+            dff = df[df['line'].isin(selected_lines) & ~df['function'].isin(selected_functions)]
+        else:
+            dff = df[df['line'].isin(selected_lines)]
+        tenure_on_exit_groups = sorted(list(dff['tenure_group_on_exit'].unique()))
         try:
             tenure_on_exit_groups.remove('9: Техническое увольнение')
         except ValueError:
@@ -392,9 +479,129 @@ def register_dash(server):
             paper_bgcolor="#EDEDED",
             hovermode='x',
             barmode='stack',
-            legend=dict(font=dict(size=10), orientation="h")
+            legend=dict(font=dict(size=10), orientation="h"),
+            dragmode="select",
         )
         figure = {'data': traces, 'layout': fte_graph_layout}
         return figure
+
+    @app.callback(
+        Output('hires_attrition_pie', 'figure'),
+        [Input('lines_checklist', 'value'),
+         Input('functions_dropdown', 'value'),
+         Input('functions_radio', 'value'),
+         Input('dates_slider', 'value')])
+    def get_hires_attrition_pie(selected_lines, selected_functions, selected_radio, dates_range):
+        if not isinstance(selected_lines, list):
+            selected_lines = [selected_lines]
+        if not isinstance(selected_functions, list):
+            selected_functions = [selected_functions]
+        start_date = dates_list[dates_range[0] - 1]
+        start_period = datetime.strftime(start_date, '%Y_%m')
+        end_date = dates_list[dates_range[1] - 1]
+        end_period = datetime.strftime(end_date, '%Y_%m')
+        df = pd.read_sql('''
+            SELECT 
+                month_start,
+                event_hire,
+                tenure_group_on_exit,
+                function,
+                line
+            FROM
+                hc_data_main
+            WHERE
+                event_hire = 1;
+        ''', con=engine, parse_dates=['month_start'])
+        if selected_radio == 'include':
+            dff = df[df['line'].isin(selected_lines) & df['function'].isin(selected_functions)]
+        elif selected_radio == 'exclude':
+            dff = df[df['line'].isin(selected_lines) & ~df['function'].isin(selected_functions)]
+        else:
+            dff = df[df['line'].isin(selected_lines)]
+        dff = dff[(dff['month_start'] <= end_date) & (dff['month_start'] >= start_date)]
+
+        dff = pd.pivot_table(
+            dff,
+            index='tenure_group_on_exit',
+            values='event_hire',
+            aggfunc='sum',
+            fill_value=0,
+            dropna=False).reset_index()
+        dff = dff[dff['tenure_group_on_exit'] != '9: Техническое увольнение']
+        total_hired = dff['event_hire'].sum()
+        dff = dff.sort_values(by=['tenure_group_on_exit'])
+        dff['groups'] = dff['tenure_group_on_exit'].apply(lambda x: colors_groups[x][0])
+
+        trace = go.Pie(
+            labels=dff['tenure_group_on_exit'],
+            values=dff['event_hire'],
+            name='Текущий статус сотрудников',
+            marker={'colors': dff['groups']}
+        )
+        title = f'Статус {total_hired} сотрудников нанятых с {datetime.strftime(start_date, "%m.%Y")} ' \
+                f'по {datetime.strftime(end_date, "%m.%Y")}'
+        pie_layout = go.Layout(
+            title_text=title,
+            autosize=True,
+            margin=dict(l=30, r=30, b=20, t=40),
+            plot_bgcolor="#EDEDED",
+            paper_bgcolor="#EDEDED",
+            hovermode='x',
+            legend=dict(font=dict(size=10), orientation="h"),
+        )
+        figure = {'data': [trace], 'layout': pie_layout}
+        return figure
+
+    @app.callback(Output("dates_slider", "value"),
+                  [Input("total_to_graph", "selectedData"),
+                   Input("hires_attrition_graph", "selectedData")],
+                  [State('memory', 'data')])
+    def update_year_slider_turnover(turnover_selected_points, attrition_selected_points, memory_data):
+        date_range_selected = [len(dates_list) - 13, len(dates_list) - 1]
+        if memory_data is None:
+            return date_range_selected
+        elif memory_data['last_clicked']['id'] is None:
+            return date_range_selected
+        elif memory_data['last_clicked']['id'] == 'turnover':
+            x_points = [pd.to_datetime(point["x"], format='%Y-%m-%d') for point in turnover_selected_points["points"]]
+        elif memory_data['last_clicked']['id'] == 'attrition':
+            x_points = [pd.to_datetime(point["x"], format='%Y-%m-%d') for point in attrition_selected_points["points"]]
+        else:
+            return date_range_selected
+        periods = np.unique(np.array(x_points))
+        max_period = np.max(periods)
+        min_period = np.min(periods)
+        last_period_index = dates_list.index(max_period) + 1
+        first_period_index = dates_list.index(min_period) + 1
+        date_range_selected = [first_period_index, last_period_index]
+        return date_range_selected
+
+    @app.callback(Output("memory", "data"),
+                  [Input("total_to_graph", "selectedData"),
+                   Input("hires_attrition_graph", "selectedData")],
+                  [State('memory', 'data')])
+    def update_year_slider_turnover(turnover_selected_data, attrition_selected_data, current_value):
+
+        if current_value is None:
+            current_value = {
+                'turnover': None,
+                'attrition': None,
+                'last_clicked': {
+                    'id': 'n/a',
+                    'value': 'nothing yet'
+                }
+            }
+        else:
+            if current_value['turnover'] != turnover_selected_data:
+                current_value['last_clicked']['id'] = 'turnover'
+                current_value['last_clicked']['value'] = turnover_selected_data
+            elif current_value['attrition'] != attrition_selected_data:
+                current_value['last_clicked']['id'] = 'attrition'
+                current_value['last_clicked']['value'] = attrition_selected_data
+        current_value['turnover'] = turnover_selected_data
+        current_value['attrition'] = attrition_selected_data
+        return current_value
+
+
 
     return app.server

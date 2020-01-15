@@ -1,0 +1,84 @@
+{% extends "base_site.html" %}
+
+{% block title %} Домашнаяя страница {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="row tile_count">
+
+        <div class="row">
+
+          <div class="col-md-8 col-sm-12 col-xs-12">
+              <div class="x_panel">
+                <div class="x_title">
+                    <h2>{{ voting_name }}</h2>
+                <div class="clearfix"></div>
+                </div>
+                  <table class="table">
+                      <thead>
+                      <tr>
+                        <th>Вариант</th>
+                        <th>Описание</th>
+                        <th>Проголосовать</th>
+                      </tr>
+
+                      </thead>
+                      <tbody>
+                        {% for option in voting_form.fields %}
+                        <tr>
+                            {{ option.hidden_tag() }}
+                            <td> {{option.texts}}</td>
+                            <td> </td>
+
+                            <td>
+                                <td>1</td>
+                                {% for subfield in option.options %}
+                                        <td>{{ subfield }}</td>
+                                {% endfor %}
+                                <td>5</td>
+                            </td>
+
+
+                        </tr>
+                        {% endfor %}
+                          <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ voting_form.submit(class="btn btn-outline-info") }}</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+
+                <div class="col-md-4 col-sm-12 col-xs-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Добавить новый вариант</h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <form class="form-group" method="POST">
+                            {{ new_option_form.hidden_tag() }}
+                            {{ new_option_form.title(class="form-control form-control-lg", placeholder="Новый функционал") }}
+                            <br>
+                            {{ new_option_form.text(class="form-control form-control-lg", placeholder="Описание") }}
+                            <br>
+                            {{ new_option_form.submit(class="btn btn-outline-info") }}
+                        </form>
+                    </div>
+                </div>
+            
+        </div>
+
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+{% endblock javascripts %}

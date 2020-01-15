@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 import json
 import locale
@@ -118,105 +117,63 @@ wf_type_radio = dcc.RadioItems(
     className='dcc_control'
 )
 
-include_maternity_checkbox = dcc.Checklist(
-    id='include_maternity_checkbox',
-    options=[
-        {'label': 'Включить декретниц', 'value': 'include_maternity'},
-    ],
-    value=[]
-)
-
-include_all_function_selected = dcc.Checklist(
-    id='include_all_function_selected',
-    options=[
-        {'label': 'Суммировать выбранные функции', 'value': 'include_all_function_selected'},
-    ],
-    value=[]
-)
 
 layout = html.Div([
+    html.Div([
+        html.Div([
+            html.Div(id='selected_dates_text', className="control_label"),
+            dates_slider,
+            html.Div("Отобрать по Юр. лицам", className="control_label"),
+            le_radio,
+            le_dropdown,
+        ],
+            className='pretty_container six columns'),
+        html.Div(
+            [create_toolip('current_fte_card', tooltip_text['current_fte_card']),
+             html.H6(id='current_fte_value'),
+             html.P(id='current_fte_text')],
+            id='current_fte_container',
+            className="mini_container three columns",
+        ),
+        html.Div(
+            [html.H6(id='change_fte_value'), html.P(id='change_fte_text')],
+            id='change_fte_container',
+            className="mini_container three columns",
+        )],
+        id="info-container",
+        className="row flex_display",
+    ),
+    html.Div([
+        dcc.Graph(id='total_fte_graph')
+    ],
+        className='pretty_container'),
+    html.Div(
+        id='fte_table_container',
+        className='pretty_container'),
+])
 
-    dcc.Tabs([
-       dcc.Tab(label='Динамика по Юр. Лицам.',
-               className='custom-tab',
-               selected_className='custom-tab--selected',
-               children=[
-           html.Div([
-               html.Div([
-                   create_toolip('fte_main_controls', tooltip_text['fte_main_controls']),
-                   html.Div(id='selected_dates_text', className="control_label"),
-                   dates_slider,
-                   html.Div("Отобрать по Юр. лицам", className="control_label"),
-                   le_radio,
-                   le_dropdown,
-               ],
-                   className='pretty_container six columns'),
-               html.Div([
-                   create_toolip('current_fte_card', tooltip_text['current_fte_card']),
-                   html.H6(id='current_fte_value'),
-                   html.P(id='current_fte_text')],
-                   id='current_fte_container',
-                   className="mini_container three columns",
-               ),
-
-               html.Div(
-                   [
-                       create_toolip('changes_fte_card', tooltip_text['changes_fte_card']),
-                       html.H6(id='change_fte_value'),
-                       html.P(id='change_fte_text')],
-                   id='change_fte_container',
-                   className="mini_container three columns",
-               )],
-               id="info-container",
-               className="row flex_display",
-           ),
-           html.Div([
-               dcc.Graph(id='total_fte_graph'),
-               create_toolip('main_fte_graph', tooltip_text['main_fte_graph']),
-           ], className='pretty_container'),
-           html.Div(
-               id='fte_table_container',
-               className='pretty_container'),
-           html.Div([
-               create_toolip('main_hc_graph', tooltip_text['main_hc_graph']),
-               include_maternity_checkbox,
-               dcc.Graph(id='total_hc_graph')
-           ], className='pretty_container'),
-       ]),
-       dcc.Tab(label='Изменения по функциям',
-               className='custom-tab',
-               selected_className='custom-tab--selected',
-               children=[
-                    html.Div([
-                            html.Div([
-                                wf_type_radio,
-                                html.Div(
-                                    id='selected_n_functions_text',
-                                    className="control_label"),
-                                n_function_show_slider,
-                                functions_dropdown,
-                                create_toolip('fte_functions_controls', tooltip_text['fte_functions_controls']),
-                            ], className='pretty_container three columns'),
-                            html.Div([
-                                dcc.Graph(id='change_fte_wf'),
-                                create_toolip('fte_waterfall', tooltip_text['fte_waterfall']),
-                            ], className='pretty_container nine columns'),
-                    ], className="row flex_display"),
-                    html.Div([
-                        html.Div([
-                            dcc.Graph(id='function_fte_graph'),
-                            create_toolip('fte_graph_function', tooltip_text['fte_graph_function'])
-                        ], className='pretty_container four columns'),
-                        html.Div([
-                            html.Div(id='detailed_function_table_container'),
-                            create_toolip('fte_table_detailed', tooltip_text['fte_table_detailed'])
-                        ], className='pretty_container eight columns'),
-                    ], className="row flex_display"),
-                    html.Div(
-                        id='detailed_people_table_container',
-                        className='pretty_container'),
-       ]),
-    ])
+excluded_content = html.Div([
+    html.Div([
+        html.Div([
+            wf_type_radio,
+            html.Div(
+                id='selected_n_functions_text',
+                className="control_label"),
+            n_function_show_slider,
+            functions_dropdown
+        ], className='pretty_container three columns'),
+        html.Div([
+            dcc.Graph(id='change_fte_wf'),
+        ], className='pretty_container nine columns'),
+    ], className="row flex_display"),
+    html.Div([
+        html.Div([
+            dcc.Graph(id='function_fte_graph')
+        ], className='pretty_container four columns'),
+        html.Div([
+            html.Div(id='detailed_function_table_container')
+        ], className='pretty_container eight columns'),
+    ], className="row flex_display")
 ])
 
 
@@ -242,7 +199,7 @@ def register_dash(server):
         if selected_radio == "all":
             return list(le_dict.keys())
         elif selected_radio == 'active':
-            return [x for x in le_dict.keys() if x not in ['bos', 'intouch', 'welbi']]
+            return [x for x in le_dict.keys() if x not in ['bos', 'intouch']]  # todo check with olga about welbi
         elif selected_radio == 'grs_only':
             return ['grs']
         elif selected_radio == 'rz_only':
@@ -254,6 +211,7 @@ def register_dash(server):
     @app.callback(Output('selected_dates_text', 'children'),
                   [Input('dates_slider', 'value')])
     def get_selected_dates_text(dates_range):
+        print(current_user.access_settings)
         start_date = dates_list[dates_range[0] - 1]
         end_date = dates_list[dates_range[1] - 1]
         text_string = 'Данные за период: {}'.format(
@@ -283,11 +241,7 @@ def register_dash(server):
                   [Input('dates_slider', 'value')])
     def get_current_fte_text(dates_range):
         current_date = dates_list[dates_range[1] - 1]
-        current_period = datetime.strftime(current_date, '%Y_%m')
-        date_for_card = pd.read_sql('SELECT DISTINCT month_end FROM hc_data_main WHERE period = "{}"'.format(
-            current_period), con=engine
-        )['month_end'][0]
-        period_text = "Численность на " + datetime.strftime(date_for_card, '%d.%m.%Y')
+        period_text = "Численность на " + datetime.strftime(current_date, '%B %Y')
         return period_text
 
     # Панель с изменением численности в процентах (значение)
@@ -395,29 +349,24 @@ def register_dash(server):
 
     @app.callback(
         Output('fte_table_container', 'children'),
-        [Input('le_dropdown', 'value')])
-    def get_fte_table(le_selected):
-        # dates_selected = dates_list[dates_range[0]:dates_range[1]]
-        le_selected = input_to_list(le_selected)
-        print(le_selected)
+        [Input('dates_slider', 'value')])
+    def get_fte_table(dates_range):
+        periods = dates_list[dates_range[0]:dates_range[1]]
         df = pd.read_sql('''
-            SELECT legal_entity_short_eng, month, year, SUM(fte) AS fte
+            SELECT month, year, SUM(fte) AS fte
             FROM hc_data_main
-            GROUP BY year, month, legal_entity_short_eng
+            GROUP BY year, month
         ''', con=engine)
-        df = df[df['legal_entity_short_eng'].isin(le_selected)]
-        df = df.groupby(['year', 'month']).agg(fte=('fte', 'sum')).reset_index()
-        df['rounded_fte'] = df['fte'].round(1)
+        df['fte'] = df['fte'].round(1)
         df['month'] = df['month'].astype('int')
         dff = pd.pivot_table(
             df,
             index='year',
             columns='month',
-            values='rounded_fte',
-            aggfunc=np.sum,
+            values='fte',
+            aggfunc='sum',
             fill_value='-'
         ).reset_index()
-        dff_t = dff.round(1)
         data = dff.to_dict('records')
         result_table = dash_table.DataTable(
             data=data,
@@ -443,96 +392,7 @@ def register_dash(server):
                 'textOverflow': 'ellipsis',
             }
         )
-
         return result_table
-
-    @app.callback(
-        Output('total_hc_graph', 'figure'),
-        [Input('dates_slider', 'value'),
-         Input('le_dropdown', 'value'),
-         Input('include_maternity_checkbox', 'value')])
-    def get_total_hc_graph(dates_range, selected_le, include_maternity):
-        df = pd.read_sql('''
-            SELECT
-                month_start,
-                legal_entity_short_eng,
-                legal_entity_group,
-                state_maternity_month_end,
-                SUM(main_employee_entry) as headcount
-            FROM
-                hc_data_main
-            WHERE
-                headcount_month_end_raw = 1
-            GROUP BY 
-                month_start,
-                legal_entity_group,
-                legal_entity_short_eng,
-                state_maternity_month_end
-                ''', con=engine, parse_dates=['month_start'])
-        df = df[df['legal_entity_short_eng'].isin(input_to_list(selected_le))]
-        if 'include_maternity' not in include_maternity:
-            df = df[df['state_maternity_month_end'] != 1]
-        df = df.groupby(['month_start', 'legal_entity_group']).agg(
-            headcount=('headcount', 'sum')).reset_index()
-        start_date = dates_list[dates_range[0] - 1]
-        end_date = dates_list[dates_range[1] - 1]
-        traces = []
-        if 'ГРС' in df['legal_entity_group'].unique():
-            le_for_graph = ['ГРС'] + [le for le in df['legal_entity_group'].unique() if le != 'ГРС']
-        else:
-            le_for_graph = df['legal_entity_group'].unique()
-        for le in le_for_graph:
-            colors = []
-            for clr in dates_list:
-                if start_date <= clr <= end_date:
-                    colors.append(colors_le[le][0])
-                else:
-                    colors.append(colors_le[le][1])
-            df_le = df[df['legal_entity_group'] == le]
-            trace = go.Bar(
-                x=df_le['month_start'],
-                y=df_le['headcount'],
-                name=le,
-                marker={
-                    'color': colors,
-                },
-                hovertemplate='<span style="color: #000000">' + le + ': %{y:,.0f}</span><extra></extra>',
-            )
-            traces.append(trace)
-        df_total = df.groupby('month_start').agg(headcount=('headcount', 'sum')).reset_index()
-        totals_trace = go.Scatter(
-            x=df_total['month_start'],
-            y=df_total['headcount'].round(0),
-            name='Всего',
-            text=df_total['headcount'].round(0),
-            textposition='top center',
-            mode='text',
-            hoverinfo='skip',
-            hovertemplate='<span style="background-color: #000000">Всего: %{y:,.0f}</span><extra></extra>'
-        )
-        traces.append(totals_trace)
-        xaxis_range = [dates_list[-36] + timedelta(days=15),
-                       dates_list[-1] + timedelta(days=15)]
-        fte_graph_layout = go.Layout(
-            title_text="Динамика численности группы компаний",
-            autosize=True,
-            margin=dict(l=30, r=30, b=20, t=40),
-            plot_bgcolor="#EDEDED",
-            paper_bgcolor="#EDEDED",
-            hovermode='x',
-            barmode='stack',
-            legend=dict(font=dict(size=10), orientation="h"),
-            xaxis=dict(range=xaxis_range, tickformat='%m.%Y', nticks=12),
-        )
-        figure = {'data': traces, 'layout': fte_graph_layout}
-        return figure
-
-    @app.callback(
-        Output('selected_n_functions_text', 'children'),
-        [Input('n_functions_show_slider', 'value')])
-    def get_selected_n_functions_text(n_functions_selected):
-        text_string = 'Показать детализацию по {} функциям'.format(n_functions_selected)
-        return text_string
 
     @app.callback(
         Output('change_fte_wf', 'figure'),
@@ -552,18 +412,18 @@ def register_dash(server):
         end_period = datetime.strftime(end_date, '%Y_%m')
         n_cases = n_functions_selected
         df_periods_total = pd.read_sql('''
-                SELECT period, legal_entity_short_eng, function, SUM(fte) as fte 
-                FROM hc_data_main
-                WHERE period = "{}" OR period = "{}" 
-                GROUP BY month_start, legal_entity_short_eng, function
-            '''.format(start_period, end_period), con=engine)
+            SELECT period, legal_entity_short_eng, function, SUM(fte) as fte 
+            FROM hc_data_main
+            WHERE period = "{}" OR period = "{}" 
+            GROUP BY month_start, legal_entity_short_eng, function
+        '''.format(start_period, end_period), con=engine)
         df_start = df_periods_total[df_periods_total['legal_entity_short_eng'].isin(le_selected) &
                                     (df_periods_total['period'] == start_period)]
         df_start = df_start.groupby('period').agg(fte=('fte', 'sum')).reset_index()
         df_start['title'] = 'FTE на ' + datetime.strftime(start_date, '%B %Y')
         df_start['measure'] = 'absolute'
         df_end = df_periods_total[df_periods_total['legal_entity_short_eng'].isin(le_selected) &
-                                  (df_periods_total['period'] == end_period)]
+                                    (df_periods_total['period'] == end_period)]
         df_end = df_end.groupby('period').agg(fte=('fte', 'sum')).reset_index()
         df_end['title'] = 'FTE на ' + datetime.strftime(end_date, '%B %Y')
         df_end['measure'] = 'absolute'
@@ -613,49 +473,61 @@ def register_dash(server):
                 increasing={"marker": {"color": 'rgba(135, 186, 91, 1)'}},
                 totals={"marker": {"color": 'rgba(114, 147, 203, 1)'}}
             ))
-        title_string = 'Изменения по функциям в рамках общего изменения численности с {}'.format(
+        title_string = 'Изменение FTE по функциям с {}'.format(
             str(datetime.strftime(start_date, '%b %Y')) +
             " по " +
             str(datetime.strftime(end_date, '%b %Y')))
         fig.update_layout(
             title_text=title_string,
             autosize=True,
-            margin=dict(l=30, r=30, b=100, t=60),
+            margin=dict(l=30, r=30, b=20, t=40),
             plot_bgcolor="#EDEDED",
             paper_bgcolor="#EDEDED",
             hovermode='x',
             legend=dict(font=dict(size=10), orientation="h")
         )
         max_value = df_result['fte'].max()
-        fig.update_yaxes(range=[0, max_value * 1.3])
+        fig.update_yaxes(range=[0, max_value * 1.1])
 
         return fig
 
     @app.callback(
+        Output('json_test', 'children'),
+        [Input('employee_changes_sankey', 'clickData')])
+    def return_json(clickData):
+        return json.dumps(clickData, indent=2)
+
+    @app.callback(
+        Output('selected_n_functions_text', 'children'),
+        [Input('n_functions_show_slider', 'value')])
+    def get_selected_n_functions_text(n_functions_selected):
+        text_string = 'Показать детализацию по {} функциям'.format(n_functions_selected)
+        return text_string
+
+    @app.callback(
         Output('function_fte_graph', 'figure'),
         [Input('change_fte_wf', 'clickData'),
-         Input('dates_slider', 'value'),
-         Input('functions_dropdown', 'value')])
-    def get_functions_fte(clickData, dates_range, selected_functions):
+         Input('dates_slider', 'value')])
+    def get_functions_fte(clickData, dates_range):
         functions = list(pd.read_sql('''
-                SELECT DISTINCT function
-                FROM hc_data_main''', con=engine)['function'].dropna())
+            SELECT DISTINCT function
+            FROM hc_data_main''', con=engine)['function'].dropna())
         try:
             function = clickData['points'][0]['x']
         except TypeError:
             function = None
         if function is None or function not in functions:
-            function = input_to_list(selected_functions)[0]
+            function = random.choice(functions)
         start_date = dates_list[dates_range[0] - 1]
         start_period = datetime.strftime(start_date, '%Y_%m')
         end_date = dates_list[dates_range[1] - 1]
         end_period = datetime.strftime(end_date, '%Y_%m')
         df = pd.read_sql('''
-                SELECT month_start, legal_entity_group, function, SUM(fte) AS fte
-                FROM hc_data_main
-                WHERE function = "{}"
-                GROUP BY month_start, legal_entity_group
-            '''.format(function), con=engine, parse_dates=['month_start'])
+            SELECT month_start, legal_entity_group, function, SUM(fte) AS fte
+            FROM hc_data_main
+            WHERE function = "{}"
+            GROUP BY month_start, legal_entity_group
+        '''.format(function), con=engine, parse_dates=['month_start'])
         df = df[(df['month_start'] >= start_date) & (df['month_start'] <= end_date)]
         traces = []
         for le in df['legal_entity_group'].unique():
@@ -678,8 +550,7 @@ def register_dash(server):
             paper_bgcolor="#EDEDED",
             hovermode='x',
             barmode='stack',
-            legend=dict(font=dict(size=10), orientation="h"),
-            xaxis=dict(tickformat='%m.%Y', nticks=5),
+            legend=dict(font=dict(size=10), orientation="h")
         )
         figure = {'data': traces, 'layout': fte_graph_layout}
         return figure
@@ -687,37 +558,35 @@ def register_dash(server):
     @app.callback(
         Output('detailed_function_table_container', 'children'),
         [Input('change_fte_wf', 'clickData'),
-         Input('dates_slider', 'value'),
-         Input('functions_dropdown', 'value')])
-    def get_detailed_functions_table(clickData, dates_range, selected_functions):
+         Input('dates_slider', 'value')])
+    def get_detailed_functions_table(clickData, dates_range):
         functions = list(pd.read_sql('''
-                    SELECT DISTINCT function
-                    FROM hc_data_main''', con=engine)['function'].dropna())
+                SELECT DISTINCT function
+                FROM hc_data_main''', con=engine)['function'].dropna())
         try:
             function = clickData['points'][0]['x']
         except TypeError:
             function = None
         if function is None or function not in functions:
-            function = input_to_list(selected_functions)[0]
-
+            function = random.choice(functions)
         start_date = dates_list[dates_range[0] - 1]
         start_period = datetime.strftime(start_date, '%Y_%m')
         end_date = dates_list[dates_range[1] - 1]
         end_period = datetime.strftime(end_date, '%Y_%m')
         df = pd.read_sql('''
-                SELECT
-                    hc.period,
-                    hc.cost_center,
-                    SUM(hc.fte) AS fte,
-                    ccf.function_detailed
-                FROM hc_data_main hc
-                LEFT JOIN ref_cost_center_functions ccf
-                ON hc.cost_center = ccf.cost_center
-                WHERE 
-                    hc.function = "{}" AND
-                    (hc.period = "{}" OR hc.period = "{}")
-                GROUP BY  hc.period, hc.cost_center, ccf.function_detailed
-            '''.format(function, start_period, end_period), con=engine)
+            SELECT
+                hc.period,
+                hc.cost_center,
+                SUM(hc.fte) AS fte,
+                ccf.function_detailed
+            FROM hc_data_main hc
+            LEFT JOIN ref_cost_center_functions ccf
+            ON hc.cost_center = ccf.cost_center
+            WHERE 
+                hc.function = "{}" AND
+                (hc.period = "{}" OR hc.period = "{}")
+            GROUP BY  hc.period, hc.cost_center, ccf.function_detailed
+        '''.format(function, start_period, end_period), con=engine)
         df['fte'] = df['fte'].round(1)
         dff = pd.pivot_table(
             df,
@@ -744,15 +613,9 @@ def register_dash(server):
             ],
             fixed_rows={'headers': True, 'data': 0},
             style_cell_conditional=[
-                {'if': {'column_id': 'start_period'},
-                 'width': '50px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'end_period'},
-                 'width': '50px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'change'},
-                 'width': '50px',
-                 'textAlign': 'left'},
+                {'if': {'column_id': 'start_period'}, 'width': '50px'},
+                {'if': {'column_id': 'end_period'}, 'width': '50px'},
+                {'if': {'column_id': 'change'}, 'width': '50px'},
                 {'if': {'column_id': 'function_detailed'},
                  'width': '35%',
                  'textAlign': 'left'}
@@ -760,167 +623,147 @@ def register_dash(server):
             style_cell={
                 'backgroundColor': '#EDEDED',
                 'textOverflow': 'ellipsis',
-                'font-size': '0.8rem',
             },
             style_table={
                 'width': '98%',
                 'maxHeight': '450px'
             },
-            sort_action="native",
-            sort_mode="multi",
         )
 
         return result_table
 
-
+    """
     @app.callback(
-        Output('detailed_people_table_container', 'children'),
-        [Input('change_fte_wf', 'clickData'),
-         Input('dates_slider', 'value'),
-         Input('functions_dropdown', 'value')])
-    def get_detailed_people_table(clickData, dates_range, selected_functions):
-        functions = list(pd.read_sql('''
-                        SELECT DISTINCT function
-                        FROM hc_data_main''', con=engine)['function'].dropna())
-        try:
-            function = clickData['points'][0]['x']
-        except TypeError:
-            function = None
-        if function is None or function not in functions:
-            function = input_to_list(selected_functions)[0]
-
+        Output('employee_changes_sankey', 'figure'),
+        [Input('dates_slider', 'value'),
+         Input('functions_dropdown', 'value'),
+         Input('le_dropdown', 'value')])
+    def get_employee_sankey(dates_range, functions_selected, le_selected):
+        if not isinstance(le_selected, list):
+            le_selected = [le_selected]
+        if not isinstance(functions_selected, list):
+            functions_selected = [functions_selected]
         start_date = dates_list[dates_range[0] - 1]
         start_period = datetime.strftime(start_date, '%Y_%m')
         end_date = dates_list[dates_range[1] - 1]
         end_period = datetime.strftime(end_date, '%Y_%m')
-        df = pd.read_sql('''
-                    SELECT
-                        hc.period,
-                        hc.cost_center,
-                        hc.city,
-                        hc.employee_id,
-                        hc.employee_name,
-                        hc.position,
-                        hc.hire_date,
-                        hc.exit_date,
-                        hc.fte,
-                        ccf.function_detailed
-                    FROM hc_data_main hc
-                    LEFT JOIN ref_cost_center_functions ccf
-                    ON hc.cost_center = ccf.cost_center
-                    WHERE 
-                        hc.function = "{}" AND
-                        (hc.period = "{}" OR hc.period = "{}")
-                '''.format(function, start_period, end_period), con=engine)
-        df['fte'] = df['fte'].round(1)
+        df_relevant_employees = pd.read_sql(
+            '''
+            SELECT
+                id_name_birth_date,
+                function,
+                legal_entity_short_eng,
+                first_hire_date, 
+                last_exit_date
+            FROM
+                hc_data_main
+            ''',
+            parse_dates=['first_hire_date', 'last_exit_date'],
+            con=engine)
+        df_first_period = pd.read_sql(
+            '''
+            SELECT DISTINCT
+                id_name_birth_date,
+                person_fte_dict,
+                legal_entities_active,
+                legal_entities_present,
+                main_le,
+                person_fte_total
+            FROM
+                hc_data_main
+            WHERE
+                period = "{}"
+            '''.format(start_period),
+            con=engine)
+        df_second_period = pd.read_sql(
+            '''
+            SELECT DISTINCT
+                id_name_birth_date,
+                person_fte_dict,
+                legal_entities_active,
+                legal_entities_present,
+                main_le,
+                person_fte_total
+            FROM
+                hc_data_main
+            WHERE
+                period = "{}"
+            '''.format(end_period),
+            con=engine)
+        df_relevant_employees = df_relevant_employees[
+            (df_relevant_employees['legal_entity_short_eng'].isin(le_selected)) &
+            (df_relevant_employees['function'].isin(functions_selected))
+        ]
 
-        if current_user.role_id not in [1, 2, 3]:
-            accesses = current_user.accesses
-            test_list = [f'{x}' for x in accesses]
-            df_ac = pd.DataFrame({
-                'access': accesses
-            })
-            df_ac['access'] = df_ac['access'].astype('str')
-            df_ac = df_ac['access'].str.split(': ', expand=True)
-            df_ac.columns = ['user_id', 'cost_center', 'city']
-            available_records = list(df_ac['cost_center'] + '_' + df_ac['city'])
-            df['check'] = df['cost_center'] + '_' + df['city']
-            df = df[df['check'].isin(available_records)]
-            df.drop(columns=['check'])
-            if df.shape[0] == 0:
-                return ''
+        df_relevant_employees = df_relevant_employees[[
+            'id_name_birth_date', 'first_hire_date', 'last_exit_date']
+        ].drop_duplicates()
 
-        fill_date = pd.Timestamp(2099, 1, 1)
-        df['exit_date'].fillna(fill_date, inplace=True)
+        df_first_period.columns = ['first_' + col if
+            col != 'id_name_birth_date' else col for col in df_first_period.columns]
+        df_second_period.columns = ['second_' + col if
+            col != 'id_name_birth_date' else col for col in df_second_period.columns]
 
-        dff = pd.pivot_table(
-            df,
-            index=['function_detailed',
-                   'employee_id',
-                   'employee_name',
-                   'position',
-                   'hire_date',
-                   'exit_date',
-                   ],
-            columns='period',
-            values='fte',
-            aggfunc='sum',
-            fill_value=0
-        ).reset_index()
-        dff.rename(columns={start_period: 'start_period', end_period: 'end_period'},
-                   inplace=True)
-        dff['change'] = (dff['end_period'] - dff['start_period']).round(1)
-        hire_check_date = start_date + pd.DateOffset(month=1)
-        exit_check_date = end_date + pd.offsets.MonthEnd(0)
-        dff.loc[dff['change'] == 0, 'type'] = 'Без изменений'
-        dff.loc[(dff['change'] > 0) &
-                (dff['hire_date'] >= hire_check_date) &
-                (dff['hire_date'] <= exit_check_date),
-                'type'] = 'Прием'
-        dff.loc[(dff['change'] > 0) &
-                (dff['exit_date'] >= (hire_check_date - pd.Timedelta(days=1))) &
-                (dff['exit_date'] < exit_check_date),
-                'type'] = 'Увольнение'
-        dff['type'].fillna('Перевод/Декрет', inplace=True)  # todo check with olga if other cases
-        dff['hire_date'] = dff['hire_date'].dt.strftime('%d.%m.%Y')
-        dff['exit_date'] = dff['exit_date'].dt.strftime('%d.%m.%Y')
-        dff['exit_date'] = dff['exit_date'].replace({'01.01.2099': '-'})
-        dff.drop(columns=['employee_id'], inplace=True)
-        data = dff.to_dict('records')
-        result_table = dash_table.DataTable(
-            data=data,
-            id='detailed_people_table',
-            style_as_list_view=True,
-            columns=[
-                {'name': 'Функция', 'id': 'function_detailed'},
-                {'name': 'Сотрудник', 'id': 'employee_name'},
-                {'name': 'Должность', 'id': 'position'},
-                {'name': 'Дата приема', 'id': 'hire_date'},
-                {'name': 'Дата увольнения', 'id': 'exit_date'},
-                {'name': 'Было', 'id': 'start_period'},
-                {'name': 'Стало', 'id': 'end_period'},
-                {'name': 'Изменение', 'id': 'change'},
-                {'name': 'Причина', 'id': 'type'},
-            ],
-            fixed_rows={'headers': True, 'data': 0},
-            style_cell_conditional=[
-                {'if': {'column_id': 'start_period'}, 'width': '80px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'end_period'}, 'width': '80px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'change'}, 'width': '80px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'hire_date'}, 'width': '100px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'exit_date'}, 'width': '100px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'type'},
-                 'width': '150px',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'function_detailed'},
-                 'width': '15%',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'employee_name'},
-                 'width': '16%',
-                 'textAlign': 'left'},
-                {'if': {'column_id': 'position'},
-                 'width': '7%',
-                 'textAlign': 'left'}
-            ],
-            style_cell={
-                'backgroundColor': '#EDEDED',
-                'textOverflow': 'ellipsis',
-            },
-            style_table={
-                'width': '98%',
-                'maxHeight': '450px',
-                'font-size': '0.8rem',
-                'text-align': 'left'
-            },
-            filter_action="native",
-            sort_action="native",
-            sort_mode="multi",
+        df = df_relevant_employees.merge(
+            df_first_period, how='left', on='id_name_birth_date'
+        ).merge(
+            df_second_period, how='left', on='id_name_birth_date')
+
+        df['first_person_fte_total'].fillna(0, inplace=True)
+        df['second_person_fte_total'].fillna(0, inplace=True)
+        df['second_person_fte_total'].sum()
+
+        df.loc[(df['first_person_fte_dict'] == df['second_person_fte_dict']) &
+               (df['first_legal_entities_active'] == df['second_legal_entities_active']) &
+               (df['first_legal_entities_present'] == df['second_legal_entities_present']) &
+               (df['first_main_le'] == df['second_main_le']) &
+               (df['first_person_fte_total'] == df['second_person_fte_total']),
+               'type'] = 'same'
+        df.loc[(df['last_exit_date'] <= (end_date + pd.tseries.offsets.MonthEnd(1))) &
+               (df['first_person_fte_total'] > df['second_person_fte_total']),
+               'type'] = 'from le to outside'
+
+        def get_fte_dict_value(dict_string, legal_entities):
+            if not isinstance(legal_entities, list):
+                legal_entities = [legal_entities]
+            total_fte = 0
+            for le in legal_entities:
+                parsed_dict = json.loads(dict_string)
+                total_fte = total_fte + parsed_dict[le]
+            return total_fte
+
+        # df['start_fte_for_le'] = df['start_person_fte_dict'].apply(lambda x: get_fte_dict_value(x, ))
+
+        fig = go.Figure(data=[go.Sankey(
+            node=dict(
+                pad=15,
+                thickness=20,
+                line=dict(color="black", width=0.5),
+                label=["Были на 01.2017", # 0
+                       "Пришли из вне", # 1
+                       "Ушли вовне", # 2
+                       "Остались на 11.2019 без изменений", # 3
+                       "Были в других ЮЛ на 01.2017", # 4
+                       "Ушли в другие ЮЛ"], # 5
+                color="blue"
+            ),
+            link=dict(
+                source=[0, 0, 0, 1, 1, 4],  # indices correspond to labels, eg A1, A2, A2, B1, ...
+                target=[3, 2, 5, 2, 3, 3],
+                value=[4, 3, 2, 3, 4, 8]
+            ))])
+
+        fig.update_layout(
+            title_text="Изменение численности",
+            font_size=10,
+            autosize=True,
+            margin=dict(l=30, r=30, b=20, t=40),
+            plot_bgcolor="#EDEDED",
+            paper_bgcolor="#EDEDED"
         )
-        return result_table
+
+        return fig
+        
+        """
 
     return app.server

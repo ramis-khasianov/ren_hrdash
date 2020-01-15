@@ -1,0 +1,54 @@
+{% extends "base_site.html" %}
+
+{% block title %} Домашнаяя страница {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="row tile_count">
+
+        <div class="row">
+
+          <div class="col-12">
+              <div class="x_panel">
+                <div class="x_title">
+                    <h2>Голосования</h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                    <a class="btn btn-light" href="{{ url_for('posts_blueprint.create_voting') }}">Добавить</a>
+                    </ul>
+                <div class="clearfix"></div>
+                </div>
+                  <table class="table">
+                      <thead>
+                      <tr>
+                        <th>Название голосования</th>
+                        <th>Описаие</th>
+                        <th>Дата начала</th>
+                      </tr>
+
+                      </thead>
+                      <tbody>
+                        {% for voting in all_votings %}
+                        <tr>
+                            <td><a href="{{url_for('posts_blueprint.view_voting', voting_id=voting.voting_id)}}">{{ voting.title }}</a></td>
+                            <td>{{ voting.description }}</td>
+                            <td>{{ voting.date.strftime('%d.%m.%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+            
+        </div>
+
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+{% endblock javascripts %}

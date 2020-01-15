@@ -7,17 +7,20 @@
 {% endblock stylesheets %}
 
 {% block content %}
+
   <div class="right_col" role="main">
     <div class="row">
       <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="dashboard_graph">
           <div style="width: 100%; min-height:800px;" >
+            {% if current_user.is_authenticated and (current_user.accesses != [] or current_user.role_id != 4) %}
             <iframe 
               noresize='noresize' 
               style='position: absolute; background: transparent; width: 95%; height:100%;' 
               src={{ dash_url }}
               frameborder="0">
             </iframe>
+            {% endif %}
           </div>
           <div class="clearfix"></div>
         </div>

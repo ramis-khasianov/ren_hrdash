@@ -10,34 +10,34 @@
 <div class="right_col" role="main">
     <div class="row tile_count">
       <div class="col-md-2 col-sm-4 col-xs-6 tile_stats_count">
-        <span class="count_top"><i class="fa fa-user"></i> Численность сегодня</span>
-        <div class="count">2666</div>
-        <span class="count_bottom"><i class="green">-4% </i> Относительно прошлой недели</span>
+        <span class="count_top"><i class="fa fa-user"></i> Численность ГРС на {{metrics['grs_hc_current']['report_date'].strftime('%d.%m')}}</span>
+        <div class="count">{{ metrics['grs_hc_current']['value'] | int}}</div>
+        <span class="count_bottom"><i>{{ metrics['grs_hc_previous']['value'] | int }}</i> - численность ГРС на {{metrics['grs_hc_previous']['report_period_end'].strftime('%d.%m')}}</span>
       </div>
       <div class="col-md-2 col-sm-4 col-xs-6 tile_stats_count">
-        <span class="count_top"><i class="fa fa-clock-o"></i> Часов обучения за неделю</span>
-        <div class="count">13</div>
-        <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i>10% </i> Относительно прошлой недели</span>
+        <span class="count_top"><i class="fa fa-user"></i> Численность РЗ на {{metrics['rz_hc_current']['report_date'].strftime('%d.%m')}}</span>
+        <div class="count">{{ metrics['rz_hc_current']['value'] | int}}</div>
+        <span class="count_bottom"><i>{{ metrics['rz_hc_previous']['value'] | int }}</i> - численность РЗ на {{metrics['rz_hc_previous']['report_period_end'].strftime('%d.%m')}}</span>
       </div>
       <div class="col-md-2 col-sm-4 col-xs-6 tile_stats_count">
-        <span class="count_top"><i class="fa fa-user"></i> Закрыто вакансий</span>
-        <div class="count green">13</div>
-        <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i>+ 5 </i> Относительно прошлой недели</span>
+        <span class="count_top"><i class="fa fa-user"></i> Численность Медкорп и ИнРос-Мед</span>
+        <div class="count">{{ metrics['other_le_hc_current']['value'] | int}}</div>
+        <span class="count_bottom"><i>{{ metrics['other_le_hc_previous']['value'] | int }}</i> - численность на {{metrics['other_le_hc_previous']['report_period_end'].strftime('%d.%m')}}</span>
       </div>
       <div class="col-md-2 col-sm-4 col-xs-6 tile_stats_count">
-        <span class="count_top"><i class="fa fa-user"></i> Уволено сотрудников</span>
-        <div class="count">35</div>
-        <span class="count_bottom"><i class="red"><i class="fa fa-sort-desc"></i>12% </i> Относительно прошлой недели</span>
+        <span class="count_top"><i class="fa fa-user"></i> Уволено с {{metrics['exits_current']['report_period_start'].strftime('%d.%m')}} по {{metrics['exits_current']['report_period_end'].strftime('%d.%m')}}</span>
+        <div class="count">{{ metrics['exits_current']['value'] | int}}</div>
+        <span class="count_bottom"><i>{{ metrics['exits_previous']['value'] | int }}</i> уволено с {{metrics['exits_previous']['report_period_start'].strftime('%d.%m')}} по {{metrics['exits_previous']['report_period_end'].strftime('%d.%m')}} </span>
       </div>
       <div class="col-md-2 col-sm-4 col-xs-6 tile_stats_count">
-        <span class="count_top"><i class="fa fa-user"></i> Активных пользователей JIVE</span>
-        <div class="count">1450</div>
-        <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i>34% </i> Относительно прошлой недели</span>
+        <span class="count_top"><i class="fa fa-user"></i> Принято с {{metrics['hires_current']['report_period_start'].strftime('%d.%m')}} по {{metrics['hires_current']['report_period_end'].strftime('%d.%m')}}</span>
+        <div class="count">{{ metrics['hires_current']['value'] | int}}</div>
+        <span class="count_bottom"><i>{{ metrics['hires_previous']['value'] | int }}</i> принято с {{metrics['hires_previous']['report_period_start'].strftime('%d.%m')}} по {{metrics['hires_previous']['report_period_end'].strftime('%d.%m')}}</span>
       </div>
       <div class="col-md-2 col-sm-4 col-xs-6 tile_stats_count">
-        <span class="count_top"><i class="fa fa-user"></i> Выполнение бюджета ФОТ</span>
-        <div class="count">+2.1%</div>
-        <span class="count_bottom"><i class="green"><i class="fa fa-sort-asc"></i>-0.4% </i> Относительно прошлой недели</span>
+        <span class="count_top"><i class="fa fa-user"></i> ФОТ на {{metrics['payroll_current']['report_period_start'].strftime('%B')}}</span>
+        <div class="count">{{ "{0:+.01%}".format(metrics['payroll_current']['value'] | float)}}</div>
+        <span class="count_bottom">Относительно бюджета</span>
       </div>
     </div>
 
@@ -75,109 +75,33 @@
       </div>
 
       <div class="col-md-6 col-sm-6 col-xs-12">
-        <div class="x_panel tile fixed_height_320">
+        <div class="x_panel tile">
           <div class="x_title">
-            <h2>Результаты голосования: Льготы</h2>
-            <ul class="nav navbar-right panel_toolbox">
-              <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-              </li>
-              <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
-                <ul class="dropdown-menu" role="menu">
-                  <li><a href="#">Settings 1</a>
-                  </li>
-                  <li><a href="#">Settings 2</a>
-                  </li>
-                </ul>
-              </li>
-              <li><a class="close-link"><i class="fa fa-close"></i></a>
-              </li>
-            </ul>
+            <h2>Планы доработки дашборда</h2>
             <div class="clearfix"></div>
           </div>
           <div class="x_content">
-            <h4>Какие льготы вам интересны внутри компании?</h4>
-            <div class="widget_summary">
-              <div class="w_left w_25">
-                <span>Короткая пятница</span>
-              </div>
-              <div class="w_center w_55">
-                <div class="progress">
-                  <div class="progress-bar bg-green" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 66%;">
-                    <span class="sr-only">60% Complete</span>
+            <div class="dashboard-widget-content">
+              <ul class="list-unstyled timeline widget">
+                {% for feature in features %}
+                <li>
+                  <div class="block">
+                    <div class="block_content">
+                      <h2 class="title">
+                                        <a>{{ feature.feature_name }}</a>
+                                    </h2>
+                      <div class="byline">
+                        <span>Планируется реализовать: {{ feature.feature_planned_end.strftime('%B %d, %Y') }} </span>
+                      </div>
+                      <p class="excerpt"> {{ feature.feature_comment }}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div class="w_right w_20">
-                <span>123</span>
-              </div>
-              <div class="clearfix"></div>
+                </li>
+                {% endfor %}
+              </ul>
             </div>
-
-            <div class="widget_summary">
-              <div class="w_left w_25">
-                <span>День удаленной работы</span>
-              </div>
-              <div class="w_center w_55">
-                <div class="progress">
-                  <div class="progress-bar bg-green" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 45%;">
-                    <span class="sr-only">60% Complete</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w_right w_20">
-                <span>53</span>
-              </div>
-              <div class="clearfix"></div>
-            </div>
-            <div class="widget_summary">
-              <div class="w_left w_25">
-                <span>ДМС</span>
-              </div>
-              <div class="w_center w_55">
-                <div class="progress">
-                  <div class="progress-bar bg-green" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 25%;">
-                    <span class="sr-only">60% Complete</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w_right w_20">
-                <span>23</span>
-              </div>
-              <div class="clearfix"></div>
-            </div>
-            <div class="widget_summary">
-              <div class="w_left w_25">
-                <span>ДМС для родственников</span>
-              </div>
-              <div class="w_center w_55">
-                <div class="progress">
-                  <div class="progress-bar bg-green" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 5%;">
-                    <span class="sr-only">60% Complete</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w_right w_20">
-                <span>3</span>
-              </div>
-              <div class="clearfix"></div>
-            </div>
-            <div class="widget_summary">
-              <div class="w_left w_25">
-                <span>Опционы</span>
-              </div>
-              <div class="w_center w_55">
-                <div class="progress">
-                  <div class="progress-bar bg-green" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 2%;">
-                    <span class="sr-only">60% Complete</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w_right w_20">
-                <span>1</span>
-              </div>
-              <div class="clearfix"></div>
-            </div>
+          </div>
 
           </div>
         </div>
